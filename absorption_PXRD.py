@@ -31,17 +31,17 @@ def load_atomic_masses(file_path):
     return atomic_masses
 
 def calculate_compound_mu(formula, energy, atomic_masses, density, Z=4) :   
-    elements = re.findall(r'([A-Z][a-z]*)(\d*)', formula)
+    elements = re.findall(r'([A-Z][a-z]*)(\d*\.?\d*)', formula)
     molecular_weight = 0
     for (element, count) in elements:
-        count = int(count) if count else 1
-        molecular_weight += atomic_masses[element] * count
+        count = count if count else 1
+        molecular_weight += atomic_masses[element] * float(count)
     
     molecular_weight_cell = molecular_weight*Z
     mu_per_AU = 0
         
     for (element, count) in elements:
-        count = int(count) if count else 1
+        count = float(count) if count else 1
         mu_at = get_atomic_absorption_coefficient(element, energy)/1e24
         mu_per_AU += mu_at * count
     
@@ -54,15 +54,18 @@ def parse_formula(formula):
     composition = {}
     for element, count in elements:
         if count == '':
-            count = 1
+            count = int(1)
         else:
-            count = int(count)
+            count = float(count)
         composition[element] = count
     return composition
 
 def molecular_weight(formula, atomic_masses):
     composition = parse_formula(formula)
-    weight = sum(atomic_masses[element] * count for element, count in composition.items())
+    weight = 0
+    for elem in composition:
+        weight += atomic_masses[elem] * composition[elem]
+    #weight = sum(atomic_masses[element] * count for element, count in composition.items())
     return weight
 
 def plot_mu_vs_energy(formula,wavelength,rho,z1,grid = 100):
